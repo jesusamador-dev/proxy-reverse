@@ -19,9 +19,12 @@ app.add_middleware(
 
 @app.post("/{path:path}")
 async def consume_external_service(path: str, request: Request):
-    base_url = "https://ffm.cycmovil.com/"
-    full_url = f"{base_url}/{path}"  # Complementar la URL con el path
+    middleware_poc = "https://ffm.cycmovil.com/"
+    middleware_odyssey = "https://ms.odysseyaimodel.com/"
 
+    origin = path[:3]  # Slice de forma más eficiente (sin necesidad de slice)
+    base_url = middleware_odyssey if origin == "/od" else middleware_poc
+    full_url = f"{base_url}/{path}"  # Complementar la URL con el path
     try:
         headers = {}
         if "authorization" in request.headers:
@@ -31,10 +34,13 @@ async def consume_external_service(path: str, request: Request):
         # Preparar la solicitud al servicio externo
         req = requests.post(full_url, headers=headers, json=body)
 
+        print(req)
+
         # Devolver la respuesta tal cual como viene del servicio externo
         return Response(content=req.content, status_code=req.status_code, media_type=req.headers.get("Content-Type"))
 
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
 
